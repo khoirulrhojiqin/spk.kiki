@@ -6,12 +6,9 @@
 
             parent::__construct();     
             $this->load->helper('form');
-            // $this->load->helper('url');
-            // $this->load->helper('file');
-            // $this->load->helper('download');
-            // $this->load->library('zip');
+            $this->load->helper('url','download','file');
             $this->load->library('session');
-            // $this->load->library('upload');  
+            $this->load->library('upload');  
             $this->load->model('M_user');  
             // $this->load->library('user_agent');   
             // #18b7b0
@@ -38,6 +35,7 @@
   public function userprofile()
   { 
       $data['user_profil'] = $this->M_user->get_data_profil();
+      // $data['berkas'] = $this->M_user->get_data_berkas();
       $this->render_page('template/admin/page/userprofile',$data);
   }
    
@@ -192,6 +190,60 @@
         }           
         echo json_encode($hasil);
 
+    }
+
+    // Upload Berkas
+    private function set_upload_options()
+    {   
+      $config = array();
+      $config['upload_path']   = './assets/upload/berkas';
+      $config['allowed_types'] = 'pdf|PDF';
+      $config['max_size']      = '90000';
+      $config['overwrite']     = TRUE;
+      $config['encrypt_name']  = FALSE;
+      return $config;
+    }
+    public function insert_berkas()
+     {
+      // $this->load->library('upload');
+      // if (!empty($_FILES['file']['name'])) {
+      //   $this->upload->initialize($this->set_upload_options());
+      //   $this->upload->do_upload("file");
+      //   $data = $this->upload->data();
+      // }else{
+      //   $data = null;
+      // }
+      // $this->load->library('upload');
+      if (!empty($_FILES['transkrip']['name'])) {
+        $this->upload->initialize($this->set_upload_options());
+        $this->upload->do_upload("transkrip");
+        $transkrip = $this->upload->data();
+      }else{
+        $transkrip = '';
+      }
+      if (!empty($_FILES['sertifikat']['name'])) {
+        $this->upload->initialize($this->set_upload_options());
+        $this->upload->do_upload("sertifikat");
+        $sertifikat = $this->upload->data();
+      }else{
+        $sertifikat = '';
+      }
+
+      $data = array(
+         'id_user'      => $this->input->post('id'),
+         'transkrip'    => $transkrip['file_name'],
+         'sertifikat'   => $sertifikat['file_name']
+       );
+       $data2 = $this->security->xss_clean($data);
+       $result_set = $this->M_user->insert_berkas($data2);
+       echo json_encode($result_set);
+    }
+
+    function get_data_berkas(){     
+        $id=$this->session->userdata('id');
+        $this->db->where('id_user',$id);
+        $data = $this->db->get('m_berkas')->result();
+        echo json_encode($data);
     }
 	// public function simpan_user(){
  //        $username= $this->security->xss_clean($this->input->post('username'));

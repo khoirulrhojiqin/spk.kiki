@@ -12,7 +12,7 @@
 										<ul class="nav nav-tabs nav-line nav-color-secondary w-100 pl-3" role="tablist">
 											<li class="nav-item"> <a class="nav-link active show" data-toggle="tab" href="#home" role="tab" aria-selected="true">Password</a> </li>
 											<li class="nav-item"> <a class="nav-link" data-toggle="tab" href="#profile" role="tab" aria-selected="false">Profile</a> </li>
-											<!-- <li class="nav-item"> <a class="nav-link" data-toggle="tab" href="#settings" role="tab" aria-selected="false">Settings</a> </li> -->
+											<li class="nav-item"> <a class="nav-link" data-toggle="tab" href="#document" role="tab" aria-selected="false">Document</a> </li>
 										</ul>
 									</div>
 								</div>
@@ -124,6 +124,46 @@
 										<button class="btn btn-success" id="editProfil">Save</button>
 										<!-- <button class="btn btn-danger">Reset</button> -->
 									</div>
+								</div>
+								<!-- Document -->
+								
+								<div id="document" class="tab-pane fade">
+									<!-- <form> -->
+									<div class="row mt-3 mb-1">
+										<div class="col-md-6">
+											<div class="form-group">
+												<label for="exampleFormControlFile1">Transkrip</label>
+												<input type="file" class="form-control-file" id="transkrip" name="files[]" multiple="multiple" accept=".pdf">
+												<!-- <input type="text" class="form-control" value="<?=$transkrip?>" readonly> -->
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="form-group">
+												<label for="exampleFormControlFile1">#</label>
+												<div id="show_transkrip"></div>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="form-group">
+												<label for="exampleFormControlFile1">Sertifikat</label>
+												<input type="file" class="form-control-file" name="files[]" multiple="multiple" id="sertifikat" accept=".pdf">
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="form-group">
+												<label for="exampleFormControlFile1">#</label>
+												<div id="show_sertifikat"></div>
+											</div>
+										</div>
+									</div>
+									  <progress id="progressBarInsertEks" value="0" max="100" style="width:100%; display: none;"></progress>
+	                                  <h3 id="statusInsertEks"></h3>
+	                                  <p id="loaded_n_totalInsertEks"></p>
+									<div class="text-right mt-3 mb-3">
+										<button class="btn btn-success" name="commit2" id="editDocument">Save</button>
+									</div>
+
+								<!-- </form> -->
 								</div>
 								</div>
 							</div>
@@ -298,4 +338,121 @@
 			            });
 			            return false;
 			        });
+
+			        // Upload Document
+				  $('#editDocument').on('click',function(){ 
+				  	if ($('#transkrip').val()=='' || $('#sertifikat').val()=='') {
+				  		$.notify({
+						icon: 'flaticon-list',
+						title: 'Warning',
+						message: 'No file chosen!',
+						},{
+							type: 'warning',
+							placement: {
+								from: "top",
+								align: "center"
+							},
+							time: 1000,
+						})
+				  	}else {
+				  		edit_document();
+				  	}
+				  	
+				  });
+
+				  function edit_document(){
+				    // e.preventDefault()
+				    document.getElementById("progressBarInsertEks").style.display = "block";
+
+				    var id     = $('#idPass').val();
+				    var file1  = $('#transkrip').get(0).files[0];
+				    var file2  = $('#sertifikat').get(0).files[0];
+
+				        var formData = new FormData();
+				        formData.append('id', id);
+				        formData.append('transkrip', file1);
+				        formData.append('sertifikat', file2);
+				        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+				        var ajax = $.ajax({
+				            method: 'POST',
+				            url:"<?php echo base_url(); ?>user/insert_berkas",
+				            data: formData,
+				            xhr: function() {
+				                var myXhr = $.ajaxSettings.xhr();
+				                if(myXhr.upload){
+				                    myXhr.upload.addEventListener('progress',progress, false);
+				                }
+				                return myXhr;
+				            },
+				            dataType: 'json',
+				            contentType: false,
+				            processData: false,
+				        });
+				        ajax.done(function(jqXHR){
+				        	$('#transkrip').val('');
+				        	$('#sertifikat').val('');
+				        	// console.log(jqXHR);
+				        	tampil_data();
+				            if(jqXHR==true) {
+				            	  $.notify({
+									icon: 'flaticon-add-user',
+									title: 'Success',
+									message: 'Berhasil upload berkas!',
+								},{
+									type: 'info',
+									placement: {
+										from: "top",
+										align: "right"
+									},
+									time: 1000,
+								});
+				            }
+				        });
+				    }
+
+				    function progress(e){
+
+				      if(e.lengthComputable){
+				          var max = e.total;
+				          var current = e.loaded;
+
+				          var Percentage = (current * 100)/max;
+				          document.getElementById("progressBarInsertEks").value = Math.round(Percentage);
+				          document.getElementById("statusInsertEks").innerHTML = Math.round(Percentage)+"% uploaded... please wait";
+				          $('#statusInsertEks').show();
+				          $('#loaded_n_totalInsertEks').show();
+				          if(Percentage >= 100)
+				          {
+				             $('#progressBarInsertEks').hide();
+				             $('#statusInsertEks').hide();
+				             $('#loaded_n_totalInsertEks').hide();
+				          }
+				      }  
+				   }
+
+				   $(document).ready(function() {
+				   	tampil_data();
+				   });
+
+				   function tampil_data(){
+		            $.ajax({
+		                type  : 'GET',
+		                url   : '<?php echo base_url()?>user/get_data_berkas',
+		                async : true,
+		                dataType : 'json',
+		                success : function(data){
+		                    var html = '';
+		                    var html2 = '';
+		                    for(i=0; i<data.length; i++){
+		                        html += '<input type="text" class="form-control" value="'+data[i].transkrip+'" readonly>';
+		                        html2 +='<input type="text" class="form-control" value="'+data[i].sertifikat+'" readonly>';
+		                    }
+		                    $('#show_transkrip').html(html);
+		                    $('#show_sertifikat').html(html2);
+		                    
+
+		                }
+		 
+		            });
+		        }
 			</script>

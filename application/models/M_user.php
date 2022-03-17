@@ -26,23 +26,43 @@ class M_user extends CI_Model{
         // $hasil=$this->db->query("INSERT INTO billco_m_user (username,password,nama,role,status,role_id,created_at,mode_sidebar) VALUES ('$username',md5('$password'),'$nama','$role','$status','$role_id','$created_at','$mode_menu' )");
         return $hasil;
     } 
-    function hapus_user($id){
-        $where = array('id' => $id);
-        $this->M_user->hapus_data($where,'billco_m_user');
-        redirect('User/Data_user');
-    }
-    function hapus_data($where,$table){
-        $this->db->where($where);
-        $this->db->delete($table);
-    }
-    function ubah_user($data,$id){
-    $this->db->where('id',$id);
-    $this->db->update('billco_m_user', $data);
-    return TRUE;
-    }
-    function ubah_pass($data,$id){
-    $this->db->where('id',$id);
-    $this->db->update('billco_m_user', $data);
-    return TRUE;
+    // function hapus_user($id){
+    //     $where = array('id' => $id);
+    //     $this->M_user->hapus_data($where,'billco_m_user');
+    //     redirect('User/Data_user');
+    // }
+    // function hapus_data($where,$table){
+    //     $this->db->where($where);
+    //     $this->db->delete($table);
+    // }
+    // function ubah_user($data,$id){
+    // $this->db->where('id',$id);
+    // $this->db->update('billco_m_user', $data);
+    // return TRUE;
+    // }
+    // function ubah_pass($data,$id){
+    // $this->db->where('id',$id);
+    // $this->db->update('billco_m_user', $data);
+    // return TRUE;
+    // }
+    
+    // function get_data_berkas(){     
+    //     $id=$this->session->userdata('id');
+    //     $this->db->where('id_user',$id);
+    //     return $this->db->get('m_berkas')->result();
+    // }
+    function insert_berkas($data)
+    {
+      $id=$this->session->userdata('id');  
+      $query = $this->db->get_where('m_berkas', array('id_user' => $id));
+        if ($query->num_rows() == 0 ) {
+            $a = $this->db->insert('m_berkas', $data);
+        }else{
+            $this->db->where('id_user',$id);
+            $a = $this->db->update('m_berkas', $data);
+        }
+
+     
+      return $a;
     }    
 }
